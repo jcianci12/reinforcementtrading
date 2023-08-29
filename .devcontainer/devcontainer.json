@@ -1,0 +1,6 @@
+{
+    "name": "reinforcementtrading",
+    "dockerComposeFile": "../docker-compose.debug.yml",
+    "service": "reinforcementtrading",
+    "workspaceFolder": "/app"
+}
