@@ -1,0 +1,18 @@
+
+init
+define the environment
+
+
+initialise the model
+if the model doesnt have any training data, we need to train it on some back data and ensure its win rate is ok
+
+if its ok we can sub to the candles
+
+sub to the candles
+
+
+
+on candle
+ 
+
+
