@@ -67,7 +67,7 @@ def get_intervals(start_date, end_date, interval):
         return intervals
 
 
-def fetch_bybit_data_v5(test, start_date, end_date, symbol, interval, category):
+def fetch_ohlcv_range(test, start_date, end_date, symbol, interval, category):
     # Get the intervals for the given date range and interval
     intervals = get_intervals(start_date, end_date, interval)
 
@@ -102,14 +102,13 @@ def fetch_bybit_data_v5(test, start_date, end_date, symbol, interval, category):
             print("Retrying after 1 minute...")
             time.sleep(60)  # Wait for 1 minute before retrying
             # Recursive call to retry fetching data
-            return fetch_bybit_data_v5(exchange, start_date, end_date, symbol, interval)
+            return fetch_ohlcv_range(exchange, start_date, end_date, symbol, interval)
 
 # Convert the data to a DataFrame
     df_new = pd.DataFrame(data, columns=[
-                        'open_time', 'open', 'high', 'low', 'close', 'volume'])
-    df_new['timestamp'] = pd.to_datetime(df_new['open_time'], unit='ms')
-    df_new.set_index('timestamp', inplace=True)
-    df_new.sort_values(by=['open_time'], inplace=True)
+                        'Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
+    df_new['Date'] = pd.to_datetime(df_new['Date'])
+    df_new.set_index('Date',inplace = True)
 
     print("returning new")
     print(df_new)
