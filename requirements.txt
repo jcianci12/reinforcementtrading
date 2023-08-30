@@ -4,3 +4,5 @@ stable-baselines
 gym-anytrading
 gym
 jupyter
+python-binance
+ccxt
