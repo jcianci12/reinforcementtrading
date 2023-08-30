@@ -1,0 +1,7 @@
+version: '3'
+services:
+  web:
+    image: mcr.microsoft.com/devcontainers/python:1-3.11-bullseye
+    # Uncomment the following lines to forward ports from the container to the host
+    # ports:
+    #   - "8080:8080"
