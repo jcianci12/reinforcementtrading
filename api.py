@@ -7,10 +7,8 @@ from logging import Logger
 import time
 import uuid
 import pandas as pd
-from pybit.unified_trading import HTTP
 import requests
 from KEYS import API_KEY, API_SECRET
-from config import *
 from functions.interval_map import *
 from functions.logger import logger
 
@@ -31,23 +29,7 @@ DELAY = 5
 TEST_URL = 'https://www.google.com'
 
 
-def get_session(test=True):
-    http = HTTP(testnet=False, api_key="...", api_secret="...")
-    http.testnet = test
-    http.endpoint = BASE_URL
-    http.api_key = API_KEY
-    http.api_secret = API_SECRET
 
-    # Check for connection
-    while True:
-        try:
-            requests.get(TEST_URL)
-            break
-        except requests.exceptions.RequestException:
-            logger(f"Connection down... retrying in {DELAY} seconds")
-            time.sleep(DELAY)
-
-    return http
 
 
 def get_min_qty_binance(symbol: str) -> float:
