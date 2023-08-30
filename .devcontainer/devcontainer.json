@@ -1,5 +1,15 @@
 {
-    "dockerComposeFile": "docker-compose.yml",
-    "service": "devcontainer",
-    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
+    "name": "Python Project",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "..",
+        "args": {
+            "VARIANT": "3.9"
+        }
+    },
+    "runArgs": [
+        "--init"
+    ],
+
+    "forwardPorts": []
 }
