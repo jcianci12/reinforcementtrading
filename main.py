@@ -20,7 +20,7 @@ from api import fetch_ohlcv_range
 # 
 def fetch_range():
     end = datetime.datetime.now()
-    start = end - datetime.timedelta(0,60*300)
+    start = end - datetime.timedelta(0,60*9000)
     return start,end
 def get_training_data():
     s, e = fetch_range()
@@ -29,7 +29,7 @@ def get_training_data():
     return trainingdata
 
 def get_env(data):
-    env = gym.make('stocks-v0', df=data, frame_bound=(5,100), window_size=5)
+    env = gym.make('stocks-v0', df=data, frame_bound=(5,len(data)), window_size=5)
     return env
     
 
