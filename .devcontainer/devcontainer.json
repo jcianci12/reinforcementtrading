@@ -11,5 +11,4 @@
         "--init"
     ],
 
-    "forwardPorts": []
-}
+    "forwardPorts": []}

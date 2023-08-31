@@ -1,15 +1,27 @@
-FROM mcr.microsoft.com/devcontainers/python:1-3.11-bullseye
+FROM mcr.microsoft.com/devcontainers/python:3.7
 
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends \
-       build-essential \
-       libpq-dev
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV PIP_NO_CACHE_DIR=1
 
+# COPY requirements.txt .
+# RUN conda install python=3.7
+RUN pip install stable-baselines
+RUN pip install gym-anytrading
+RUN pip install python-binance
+RUN pip install ccxt
+RUN pip install tensorflow==1.15.0
+# RUN pip install protobuf
+# RUN pip uninstall -y protobuf
+# RUN pip install protobuf==3.19.4
+# RUN apt-get update && apt-get install -y python3-opencv
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# RUN pip install opencv-python
+# RUN pip uninstall -y gym
+# RUN pip install gym==0.19.0
+
 
 WORKDIR /workspace
+# # Set up Jupyter notebook
+# EXPOSE 8888
+# CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--allow-root", "--no-browser"]
