@@ -6,11 +6,14 @@ ENV PIP_NO_CACHE_DIR=1
 
 # COPY requirements.txt .
 # RUN conda install python=3.7
-RUN pip install stable-baselines
+RUN pip install tensorflow
+RUN pip install stable_baselines3
 RUN pip install gym-anytrading
 RUN pip install python-binance
 RUN pip install ccxt
-RUN pip install tensorflow==1.15.0
+RUN pip install gym-anytrading
+RUN pip install shimmy>=0.2.1
+# RUN pip install tensorflow-gpu
 # RUN pip install protobuf
 # RUN pip uninstall -y protobuf
 # RUN pip install protobuf==3.19.4

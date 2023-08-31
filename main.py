@@ -3,12 +3,9 @@ import datetime
 import gym as gym
 import gym_anytrading
 
-# Stable baselines - rl stuff
-# from stable_baselines3.common.vec_env import DummyVecEnv
-# from stable_baselines3_contrib.ppo_lstm import PPO
-# Stable baselines - rl stuff
-from stable_baselines.common.vec_env import DummyVecEnv
-from stable_baselines import A2C
+# Stable baselines - RL stuff
+from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3 import A2C
 # Processing libraries
 import numpy as np
 import pandas as pd
@@ -91,7 +88,7 @@ def main():
     # model = load_model_or_create_if_not_exist("Model",env) 
     env_maker = lambda: gym.make('stocks-v0', df=trainingdata, frame_bound=(5,100), window_size=5)
     env = DummyVecEnv([env_maker])
-    model = A2C('MlpLstmPolicy', env, verbose=1) 
+    model = A2C('MlpPolicy', env, verbose=1) 
     model.learn(total_timesteps=1000000)
 
 
