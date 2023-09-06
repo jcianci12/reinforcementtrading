@@ -65,11 +65,11 @@ def get_env(data,s,e):
     state = env.reset()
     while True: 
         action = env.action_space.sample()
-        n_state, reward, done, info = env.step(action)
-        if done: 
-            print("info", info)
-            break
-            
+        observation, reward, terminated, truncated, info = env.step(action)
+        done = terminated or truncated
+        if done:
+            print("Info",info) 
+            break           
     plt.figure(figsize=(15,6))
     plt.cla()
     plt.savefig("env.png")
@@ -80,12 +80,14 @@ def explore(env):
     # Explore the environment
     env.action_space
 
-    state = env.reset()
     while True:
         action = env.action_space.sample()
-        n_state, reward, done, info = env.step(action)
+        observation, reward, terminated, truncated, info = env.step(action)
+        done = terminated or truncated
+
+        # env.render()
         if done:
-            print("info", info)
+            print("info:", info)
             break
 
     plt.figure(figsize=(15, 6))
@@ -99,17 +101,19 @@ def explore(env):
 def gettrainedmodel(model):
     # Creating our dummy vectorizing environment
 
-    model.learn(total_timesteps=100000)
+    model.learn(total_timesteps=5000)
     return model
+#evaluate the model
 #evaluate the model
 def evaluate(data,model,env):
 
-    obs = env.reset()
+    env = gym.make('stocks-v0', df=data, frame_bound=(25,35), window_size=5)
+    obs, info = env.reset()
     while True: 
         obs = obs[np.newaxis, ...]
         action, _states = model.predict(obs)
-        obs, rewards, done, info = env.step(action)
-        if done:
+        obs, rewards, done, truncated, info = env.step(action)
+        if done or truncated:
             print("info", info)
             break
 
@@ -119,6 +123,8 @@ def evaluate(data,model,env):
     plt.savefig("evaluate")
     plt.close()
 
+
+
 def main():
     #get the data
     trainingdata = get_training_data()
@@ -127,7 +133,7 @@ def main():
     env = get_env(trainingdata,5,200)
     print(trainingdata)
     print(env)
-    explore(env)
+    # explore(env)
     model = load_model_or_create_if_not_exist("model",env)
     model = gettrainedmodel(model)
     save_model(model,"Model")   
