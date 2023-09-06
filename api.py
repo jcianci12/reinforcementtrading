@@ -4,6 +4,8 @@ import decimal
 import hashlib
 import hmac
 from logging import Logger
+import os
+import shutil
 import time
 import uuid
 import pandas as pd
@@ -67,7 +69,52 @@ def get_intervals(start_date, end_date, interval):
         return intervals
 
 
-def fetch_ohlcv_range(test, start_date, end_date, symbol, interval, category):
+def get_dates_and_data_from_latest_file(folder='data'):
+    # Create the path to the folder
+    folder_path = os.path.join(os.getcwd(), folder)
+
+    # Check if the folder exists
+    if not os.path.exists(folder_path):
+        # If the folder does not exist, return None
+        return None,None,None
+
+    # Get a list of all files in the specified folder
+    files = os.listdir(folder_path)
+
+    # Filter the list of files to only include files with the desired format
+    files = [file for file in files if file.endswith('.csv') and '_' in file]
+
+    # Sort the list of files by their modification time in descending order
+    files.sort(key=lambda file: os.path.getmtime(os.path.join(folder_path, file)), reverse=True)
+
+    # Check if there are any files in the list
+    if len(files) > 0:
+        # If there are files in the list, get the latest file
+        latest_file = files[0]
+
+        # Extract the start and end dates from the file name
+        start_date_unix, end_date_unix = latest_file.replace('.csv', '').split('_')
+
+        # Convert the start and end dates from Unix timestamps to datetime objects
+        start_date = datetime.datetime.fromtimestamp(int(start_date_unix) / 1000)
+        end_date = datetime.datetime.fromtimestamp(int(end_date_unix) / 1000)
+
+        # Create the path to the latest file
+        latest_file_path = os.path.join(folder_path, latest_file)
+
+        # Load the data from the latest file into a DataFrame
+        df = pd.read_csv(latest_file_path)
+        
+        # Return the start and end dates and the data as a tuple
+        return end_date, datetime.datetime.now(), df
+    else:
+        # If there are no files in the list, return None
+        return None,None,None
+
+
+
+
+def fetch_ohlcv_range( start_date, end_date, symbol, interval, category):
     # Get the intervals for the given date range and interval
     intervals = get_intervals(start_date, end_date, interval)
 
@@ -104,18 +151,22 @@ def fetch_ohlcv_range(test, start_date, end_date, symbol, interval, category):
             # Recursive call to retry fetching data
             return fetch_ohlcv_range(exchange, start_date, end_date, symbol, interval)
 
-# Convert the data to a DataFrame
+    # Convert the data to a DataFrame
     df_new = pd.DataFrame(data, columns=[
                         'Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
-    df_new['Date'] = pd.to_datetime(df_new['Date'])
-    df_new.set_index('Date',inplace = True)
+    # df_new['Date'] = pd.to_datetime(df_new['Date'])
+    # df_new.set_index('Date',inplace = True)
 
     print("returning new")
     print(df_new)
-    df_new.to_csv("new.csv")
+  
+    # Convert the start and end dates to Unix timestamps in seconds
+    start_date.timestamp()
+    end_date.timestamp()
     df_new = df_new[~df_new.index.duplicated(keep='first')]
 
     return df_new
+
 
 
 # %%

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/python:3.7
+FROM mcr.microsoft.com/devcontainers/python
 
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -8,11 +8,11 @@ ENV PIP_NO_CACHE_DIR=1
 # RUN conda install python=3.7
 RUN pip install tensorflow
 RUN pip install stable_baselines3
+RUN pip install gym
 RUN pip install gym-anytrading
+
 RUN pip install python-binance
 RUN pip install ccxt
-RUN pip install gym-anytrading
-RUN pip install shimmy>=0.2.1
 # RUN pip install tensorflow-gpu
 # RUN pip install protobuf
 # RUN pip uninstall -y protobuf
