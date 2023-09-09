@@ -2,21 +2,23 @@
 import datetime
 import os
 import shutil
-# import gym
-import gym_anytrading
-import gymnasium as gym
+import subprocess
+import webbrowser
 
 # Stable baselines - RL stuff
-from stable_baselines3 import A2C
+from stable_baselines3 import A2C, PPO
 # Processing libraries
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from Trading_Env import TradingEnv
 
 
 from api import fetch_ohlcv_range,get_dates_and_data_from_latest_file
 from load_model_or_create_if_not_exist import load_model_or_create_if_not_exist
+from prep_data import prep_data
 from save_model import save_model
+import signal
 
 
 
@@ -33,10 +35,11 @@ def get_training_data():
         df_new = fetch_ohlcv_range(
         s, e, "BTCUSDT", "1m", "spot")
     else:
+        
         df_new = fetch_ohlcv_range(
         s, e, "BTCUSDT", "1m", "spot")
-        a = data['Date'].iloc[-1]
-        b = df_new['Date'].iloc[1]
+        a = data['date'].iloc[-1]
+        b = df_new['date'].iloc[0]
         # Calculate the time delta in seconds
         delta_seconds = (a - b) / 1000
 
@@ -45,28 +48,33 @@ def get_training_data():
 
         df_new = pd.concat([data,df_new])
 
+        df_new = prep_data(df_new)
+
         # Create the file name using the start and end dates in Unix format
 
-    file_name = f"{df_new['Date'].iloc[0]}_{df_new['Date'].iloc[-1]}.csv"
+    file_name = f"{df_new['date'].iloc[0]}_{df_new['date'].iloc[-1]}.csv"
     if(os.path.exists("data")):
         shutil.rmtree("data")
     # Save the DataFrame to a CSV file with the specified file name
     os.mkdir("data")
     df_new.to_csv(f"data/{file_name}",index=False)
-
+    df_new.columns = df_new.columns.str.lower()
+    
     return df_new
 
 
-#get the environment
-def get_env(data,s,e):
-    env = gym.make('stocks-v0', df=data, frame_bound=(s,e), window_size=5)
-    
 
+#get the environment
+def get_env(X_train,y_train):
+    env = TradingEnv(X_train,y_train)
+    
     state = env.reset()
     while True: 
         action = env.action_space.sample()
-        observation, reward, terminated, truncated, info = env.step(action)
-        done = terminated or truncated
+        #how can I use this info returned from the step function?
+        #self.ohlcv[self.current_step-5:self.current_step].astype(np.float32), self.reward, done, {}
+        observation, reward, terminated, info = env.step(action)
+        done = terminated
         if done:
             print("Info",info) 
             break           
@@ -76,70 +84,75 @@ def get_env(data,s,e):
     plt.close()
     return env
 
-def explore(env):
-    # Explore the environment
-    env.action_space
-
-    while True:
-        action = env.action_space.sample()
-        observation, reward, terminated, truncated, info = env.step(action)
-        done = terminated or truncated
-
-        # env.render()
-        if done:
-            print("info:", info)
-            break
-
-    plt.figure(figsize=(15, 6))
-    plt.cla()
-    env.render_all()
-    plt.savefig("explore")
-
-
-
     #train the model
-def gettrainedmodel(model):
-    # Creating our dummy vectorizing environment
-
-    model.learn(total_timesteps=5000)
+def gettrainedmodel(model: PPO) -> PPO:
+    # Launch TensorBoard
+    # Open TensorBoard in a web browser
+    webbrowser.open("http://localhost:6006")
+    print("training")
+    model.learn(total_timesteps=1000000,tb_log_name="PPO")
+# Close the TensorBoard server
     return model
-#evaluate the model
-#evaluate the model
-def evaluate(data,model,env):
 
-    env = gym.make('stocks-v0', df=data, frame_bound=(25,35), window_size=5)
-    obs, info = env.reset()
-    while True: 
-        obs = obs[np.newaxis, ...]
-        action, _states = model.predict(obs)
-        obs, rewards, done, truncated, info = env.step(action)
-        if done or truncated:
-            print("info", info)
-            break
 
-    plt.figure(figsize=(15,6))
-    plt.cla()
-    env.render_all()
-    plt.savefig("evaluate")
+#evaluate the model
+def evaluate(X_test,y_test,model):
+    equity = [1]
+    last_action = 0
+    trading_cost = 0.01
+    for i in range(5, X_test.shape[0]):
+
+        # print(f"Input data at step {i}:")
+        # print(X_test[i-5:i])
+        action, _ = model.predict(X_test[i-5:i], deterministic=True)
+        currenty_test = y_test[i]
+        # print("action:",action,i)
+        if action == 0:
+            new = equity[-1] * (1 - (trading_cost if last_action != action else 0))
+        elif action == 1:
+            new = equity[-1] * (1 + currenty_test - (trading_cost if last_action != action else 0))
+        elif action == 2:
+            new = equity[-1] * (1 + -1 * currenty_test - (trading_cost if last_action != action else 0))
+    
+    equity.append(new)
+    last_action = action
+    plt.figure(figsize=(15, 10))
+    plt.title("Equity Curve")
+    plt.xlabel("timestep")
+    plt.ylabel("equity")
+    plt.plot(equity)
+    plt.savefig("equity")
     plt.close()
-
 
 
 def main():
     #get the data
     trainingdata = get_training_data()
+    ret = np.log(trainingdata/trainingdata.shift(1)).iloc[1:].close
 
-    #get the env
-    env = get_env(trainingdata,5,200)
-    print(trainingdata)
-    print(env)
+
+    X_train = trainingdata.iloc[:-500].values
+    X_test = trainingdata.iloc[-500:].values
+    y_train = ret.iloc[:-500].values
+    y_test = ret.iloc[-500:].values
+
+
+    env = get_env(X_train,y_train)
+        # sample action:
+    print("sample action:", env.action_space.sample())
+
+    # observation space shape:
+    print("observation space shape:", env.observation_space.shape)
+
+    # sample observation:
+    print("sample observation:", env.observation_space.sample())
+
     # explore(env)
     model = load_model_or_create_if_not_exist("model",env)
     model = gettrainedmodel(model)
     save_model(model,"Model")   
 
-    evaluate(trainingdata,model,get_env(trainingdata,190,210))
+    evaluate(X_test,y_test,model)
 
 main()
 # on candle
-

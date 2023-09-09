@@ -1,21 +1,18 @@
-from stable_baselines3 import A2C
+import gymnasium
+from stable_baselines3 import DQN, PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
-
-
-
+from typing import Union
 import os
 
 
-def load_model_or_create_if_not_exist(filename, env):
+def load_model_or_create_if_not_exist(filename: str, env: Union[gymnasium.Env, DummyVecEnv]) -> PPO:
+    if False:
 
-
-    if os.path.exists(filename):
-        return A2C.load(filename)
+    # if os.path.exists(filename):
+        return PPO.load(filename)
     else:
         env_maker = lambda: env
         dummyenv = DummyVecEnv([env_maker])
-
-        # Initializing and training the A2C model
-        model = A2C('MlpPolicy', dummyenv, verbose=1)
-        return model
+        model = PPO('MlpPolicy', env, verbose=1,tensorboard_log="logdir")
+    return model
 

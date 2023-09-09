@@ -76,7 +76,7 @@ def get_dates_and_data_from_latest_file(folder='data'):
     # Check if the folder exists
     if not os.path.exists(folder_path):
         # If the folder does not exist, return None
-        return None,None,None
+        return None,None,pd.DataFrame()
 
     # Get a list of all files in the specified folder
     files = os.listdir(folder_path)
@@ -96,8 +96,8 @@ def get_dates_and_data_from_latest_file(folder='data'):
         start_date_unix, end_date_unix = latest_file.replace('.csv', '').split('_')
 
         # Convert the start and end dates from Unix timestamps to datetime objects
-        start_date = datetime.datetime.fromtimestamp(int(start_date_unix) / 1000)
-        end_date = datetime.datetime.fromtimestamp(int(end_date_unix) / 1000)
+        start_date = datetime.datetime.fromtimestamp(float(start_date_unix) / 1000)
+        end_date = datetime.datetime.fromtimestamp(float(end_date_unix) / 1000)
 
         # Create the path to the latest file
         latest_file_path = os.path.join(folder_path, latest_file)
@@ -109,10 +109,7 @@ def get_dates_and_data_from_latest_file(folder='data'):
         return end_date, datetime.datetime.now(), df
     else:
         # If there are no files in the list, return None
-        return None,None,None
-
-
-
+        return None,None,pd.DataFrame()
 
 def fetch_ohlcv_range( start_date, end_date, symbol, interval, category):
     # Get the intervals for the given date range and interval
@@ -149,11 +146,14 @@ def fetch_ohlcv_range( start_date, end_date, symbol, interval, category):
             print("Retrying after 1 minute...")
             time.sleep(60)  # Wait for 1 minute before retrying
             # Recursive call to retry fetching data
-            return fetch_ohlcv_range(exchange, start_date, end_date, symbol, interval)
+            df= fetch_ohlcv_range(exchange, start_date, end_date, symbol, interval)
+            df.columns = df.columns.str.lower()
+            return df
+
 
     # Convert the data to a DataFrame
     df_new = pd.DataFrame(data, columns=[
-                        'Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
+                        'date', 'open', 'high', 'low', 'close', 'volume'])
     # df_new['Date'] = pd.to_datetime(df_new['Date'])
     # df_new.set_index('Date',inplace = True)
 
