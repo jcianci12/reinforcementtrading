@@ -41,25 +41,28 @@ class TradingEnv(gym.Env):
         return obs, info
 
     def step(self, action):
-        # print(action)
         if action == self.LONG:
             self.reward *= 1 + self.ret[self.current_step] - (self.trading_cost if self.last_action != action else 0)
         elif action == self.SHORT:
             self.reward *= 1 + -1 * self.ret[self.current_step] - (self.trading_cost if self.last_action != action else 0)
         elif action == self.FLAT:
-             self.reward *= 1 - (self.trading_cost if self.last_action != action else 0)
+            self.reward *= 1 - (self.trading_cost if self.last_action != action else 0)
         else:
             raise ValueError("Received invalid action={} which is not part of the action space".format(action))
-            
+        
         print(f"Step: {self.current_step}, Action: {action}, Reward: {self.reward}")
         self.last_action = action
         self.current_step += 1
 
         # Have we iterate all data points?
-        done = (self.current_step == self.ret.shape[0]-1)
-        # print(self.reward)
-        # Reward as return
-        return self.ohlcv[self.current_step-5:self.current_step].astype(np.float32), self.reward, done, {}
+        terminated = (self.current_step == self.ret.shape[0]-1)
+        
+        # Return observation, reward, terminated, truncated, and info dictionary
+        observation = self.ohlcv[self.current_step-5:self.current_step].astype(np.float32)
+        truncated = False  # You'll need to define this based on your environment's logic
+        info = {}  # Empty info dictionary
+        return observation, self.reward, terminated, truncated, info
+
 
     def render(self, mode='console'):
         if mode != 'console':

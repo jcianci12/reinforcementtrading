@@ -73,7 +73,7 @@ def get_env(X_train,y_train):
         action = env.action_space.sample()
         #how can I use this info returned from the step function?
         #self.ohlcv[self.current_step-5:self.current_step].astype(np.float32), self.reward, done, {}
-        observation, reward, terminated, info = env.step(action)
+        observation, reward, terminated, truncated, info = env.step(action)
         done = terminated
         if done:
             print("Info",info) 
