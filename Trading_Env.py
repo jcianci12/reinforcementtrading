@@ -33,20 +33,25 @@ class TradingEnv(gym.Env):
     def reset(self ,seed=None):
         # Reset the number of step the training has taken
         self.current_step = 5
+        self.reward = 1
         # Reset the last action
         self.last_action = 0
         # must return np.array type
         obs = self.ohlcv[self.current_step-5:self.current_step].astype(np.float32)
         info = {}  # Empty info dictionary
         return obs, info
+    
 
     def step(self, action):
         if action == self.LONG:
-            self.reward *= 1 + self.ret[self.current_step] - (self.trading_cost if self.last_action != action else 0)
+            self.reward *= np.log1p(1 + self.ret[self.current_step] - (self.trading_cost if self.last_action != action else 0))
+            # print (f"action was {action} and the reward is now:{self.reward} " )
         elif action == self.SHORT:
-            self.reward *= 1 + -1 * self.ret[self.current_step] - (self.trading_cost if self.last_action != action else 0)
+            self.reward *= np.log1p(1 + -1 * self.ret[self.current_step] - (self.trading_cost if self.last_action != action else 0))
+            # print (f"action was {action} and the reward is now:{self.reward} ")
         elif action == self.FLAT:
-            self.reward *= 1 - (self.trading_cost if self.last_action != action else 0)
+            self.reward *= np.log1p(1 - (self.trading_cost if self.last_action != action else 0))
+            # print (f"action was {action} and the reward is now:{self.reward} ")
         else:
             raise ValueError("Received invalid action={} which is not part of the action space".format(action))
         
@@ -55,13 +60,14 @@ class TradingEnv(gym.Env):
         self.current_step += 1
 
         # Have we iterate all data points?
-        terminated = (self.current_step == self.ret.shape[0]-1)
+        done = (self.current_step == self.ret.shape[0]-1)
         
         # Return observation, reward, terminated, truncated, and info dictionary
         observation = self.ohlcv[self.current_step-5:self.current_step].astype(np.float32)
         truncated = False  # You'll need to define this based on your environment's logic
         info = {}  # Empty info dictionary
-        return observation, self.reward, terminated, truncated, info
+        return observation, self.reward, done, truncated, info
+
 
 
     def render(self, mode='console'):

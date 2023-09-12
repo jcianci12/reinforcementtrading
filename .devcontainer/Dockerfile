@@ -12,6 +12,7 @@ RUN pip install gym-anytrading
 
 RUN pip install python-binance
 RUN pip install ccxt
+RUN pip install finta
 
 
 

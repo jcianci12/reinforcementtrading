@@ -19,25 +19,26 @@ from load_model_or_create_if_not_exist import load_model_or_create_if_not_exist
 from prep_data import prep_data
 from save_model import save_model
 import signal
-
+from stable_baselines3.common.env_checker import check_env
 
 
 #get the range
 def fetch_range():
     end = datetime.datetime.now()    
-    start = end - datetime.timedelta(0,60*1000)
+    start = end - datetime.timedelta(0,300*1000)
     return start,end
 #get the data
 def get_training_data():
     s,e,data = get_dates_and_data_from_latest_file()
     if(data.empty):
+        interval = '5m'
         s, e = fetch_range()
         df_new = fetch_ohlcv_range(
-        s, e, "BTCUSDT", "1m", "spot")
+        s, e, "BTCUSDT", "5m", "spot")
     else:
         
         df_new = fetch_ohlcv_range(
-        s, e, "BTCUSDT", "1m", "spot")
+        s, e, "BTCUSDT", "5m", "spot")
         a = data['date'].iloc[-1]
         b = df_new['date'].iloc[0]
         # Calculate the time delta in seconds
@@ -59,7 +60,8 @@ def get_training_data():
     os.mkdir("data")
     df_new.to_csv(f"data/{file_name}",index=False)
     df_new.columns = df_new.columns.str.lower()
-    
+
+
     return df_new
 
 
@@ -82,15 +84,19 @@ def get_env(X_train,y_train):
     plt.cla()
     plt.savefig("env.png")
     plt.close()
+    # Assuming `CustomEnv` is your custom environment class
+    check_env(env)
     return env
 
     #train the model
-def gettrainedmodel(model: PPO) -> PPO:
+def trainmodel(model: PPO) -> PPO:
     # Launch TensorBoard
     # Open TensorBoard in a web browser
-    webbrowser.open("http://localhost:6006")
+    # webbrowser.open("http://localhost:6006")
     print("training")
-    model.learn(total_timesteps=1000000,tb_log_name="PPO")
+    model.learn(total_timesteps=500000,tb_log_name="PPO")
+    save_model(model,"Model")   
+
 # Close the TensorBoard server
     return model
 
@@ -105,6 +111,7 @@ def evaluate(X_test,y_test,model):
         # print(f"Input data at step {i}:")
         # print(X_test[i-5:i])
         action, _ = model.predict(X_test[i-5:i], deterministic=True)
+        print(f"choosing:{action}")
         currenty_test = y_test[i]
         # print("action:",action,i)
         if action == 0:
@@ -138,6 +145,7 @@ def main():
 
 
     env = get_env(X_train,y_train)
+    
         # sample action:
     print("sample action:", env.action_space.sample())
 
@@ -149,8 +157,7 @@ def main():
 
     # explore(env)
     model = load_model_or_create_if_not_exist("model",env)
-    model = gettrainedmodel(model)
-    save_model(model,"Model")   
+    # model = trainmodel(model)
 
     evaluate(X_test,y_test,model)
 
