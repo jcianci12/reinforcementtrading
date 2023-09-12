@@ -1,2 +1,5 @@
 KEYS.py
 *.csv
+__pycache__/
+logdir/
+
