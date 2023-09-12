@@ -3,3 +3,7 @@ KEYS.py
 __pycache__/
 logdir/
 
+Model.zip
+new.csv
+
+*.pyc
