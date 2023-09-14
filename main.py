@@ -138,10 +138,10 @@ def main():
     ret = np.log(trainingdata/trainingdata.shift(1)).iloc[1:].close
 
 
-    X_train = trainingdata.iloc[:-500].values
-    X_test = trainingdata.iloc[-500:].values
-    y_train = ret.iloc[:-500].values
-    y_test = ret.iloc[-500:].values
+    X_train = trainingdata.iloc[:-50].values
+    X_test = trainingdata.iloc[-50:].values
+    y_train = ret.iloc[:-50].values
+    y_test = ret.iloc[-50:].values
 
 
     env = get_env(X_train,y_train)
