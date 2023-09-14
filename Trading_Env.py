@@ -85,7 +85,7 @@ class TradingEnv(gym.Env):
         truncated = False  # You'll need to define this based on your environment's logic
         info = {}  # Empty info dictionary
         if(done):
-            print(f"Step: {self.current_step}, Action: {action}, Reward: {self.reward}, Cash: {self.current_amount}, Asset: {self.current_asset_amount} ")
+            print(f"Step: {self.current_step}, Action: {action}, Reward: {self.reward}, Cash: {self.current_amount}, Asset: {self.current_asset_amount}, Total: {self.current_amount+self.current_asset_amount} ")
 
         return observation, self.reward, done, truncated, info
 

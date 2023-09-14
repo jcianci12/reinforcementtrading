@@ -99,29 +99,48 @@ def trainmodel(model: PPO) -> PPO:
 # Close the TensorBoard server
     return model
 
-
-#evaluate the model
 def evaluate(X_test,y_test,model):
     equity = [1]
     last_action = 0
     trading_cost = 0.01
-    for i in range(5, X_test.shape[0]):
+    current_amount = 1000  # Initialize starting amount here
+    current_asset_amount = 0  # Initialize starting amount here
 
-        # print(f"Input data at step {i}:")
-        # print(X_test[i-5:i])
-        action, _ = model.predict(X_test[i-5:i], deterministic=True)
+    for i in range(5, X_test.shape[0]):
+        observation = np.append(X_test[i-5:i], [current_amount, current_asset_amount]).astype(np.float32)
+        action, _ = model.predict(observation, deterministic=True)
         print(f"choosing:{action}")
         currenty_test = y_test[i]
-        # print("action:",action,i)
-        if action == 0:
-            new = equity[-1] * (1 - (trading_cost if last_action != action else 0))
-        elif action == 1:
-            new = equity[-1] * (1 + currenty_test - (trading_cost if last_action != action else 0))
-        elif action == 2:
-            new = equity[-1] * (1 + -1 * currenty_test - (trading_cost if last_action != action else 0))
-    
-    equity.append(new)
-    last_action = action
+
+        amount = action[0]  # Extract the amount from the action
+
+        if amount > 0:  # Buying
+            if amount * (1 + trading_cost) > current_amount:
+                reward = -1  # Punishment
+            else:
+                change = (1 + currenty_test - trading_cost)
+                current_amount -= amount * change
+                current_asset_amount += amount
+                reward = np.log1p(change)
+        elif amount < 0:  # Selling
+            if abs(amount) > current_asset_amount:
+                reward = -1  # Punishment
+            else:
+                change = (1 + -1 * currenty_test - trading_cost)
+                current_amount -= amount * change  # Subtract because amount is negative
+                current_asset_amount += amount  # Add because amount is negative
+                reward = np.log1p(change)
+        elif amount == 0:  # Holding
+            change = 1
+            reward = np.log1p(change)
+        else:
+            raise ValueError("Received invalid action={} which is not part of the action space".format(action))
+
+        new = equity[-1] * (1 + reward)  # Calculate new equity value based on the reward
+        equity.append(new)
+        last_action = action
+
+
     plt.figure(figsize=(15, 10))
     plt.title("Equity Curve")
     plt.xlabel("timestep")
@@ -129,6 +148,7 @@ def evaluate(X_test,y_test,model):
     plt.plot(equity)
     plt.savefig("equity")
     plt.close()
+
 
 
 def main():
@@ -157,7 +177,7 @@ def main():
 
     # explore(env)
     model = load_model_or_create_if_not_exist("model",env)
-    model = trainmodel(model)
+    # model = trainmodel(model)
 
     evaluate(X_test,y_test,model)
 
