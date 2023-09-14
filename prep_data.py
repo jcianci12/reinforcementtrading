@@ -81,6 +81,13 @@ def _get_indicator_data(data):
     
     
     return data
+
+from sklearn.preprocessing import MinMaxScaler
+
+def normalize_df(df):
+    scaler = MinMaxScaler()
+    df_normalized = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
+    return df_normalized
 # def removecols(data):
 #     del (data['open'])
 #     del (data['high'])
@@ -100,5 +107,8 @@ def prep_data(data):
     data = (
         data.dropna()
     )  # Some indicators produce NaN values for the first few rows, we just remove them here
+
+    # data = normalize_df(data)
+
     return data
 

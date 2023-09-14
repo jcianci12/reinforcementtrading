@@ -30,6 +30,8 @@ class TradingEnv(gym.Env):
         dfwidth = ohlcv.shape[1]
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(5, ohlcv.shape[1]), dtype=np.float64)
 
+        startingamountusdt = 1000
+
     def reset(self ,seed=None):
         # Reset the number of step the training has taken
         self.current_step = 5
@@ -55,7 +57,7 @@ class TradingEnv(gym.Env):
         else:
             raise ValueError("Received invalid action={} which is not part of the action space".format(action))
         
-        print(f"Step: {self.current_step}, Action: {action}, Reward: {self.reward}")
+        # print(f"Step: {self.current_step}, Action: {action}, Reward: {self.reward}")
         self.last_action = action
         self.current_step += 1
 

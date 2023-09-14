@@ -49,7 +49,6 @@ def get_training_data():
 
         df_new = pd.concat([data,df_new])
 
-        df_new = prep_data(df_new)
 
         # Create the file name using the start and end dates in Unix format
 
@@ -135,6 +134,7 @@ def evaluate(X_test,y_test,model):
 def main():
     #get the data
     trainingdata = get_training_data()
+    trainingdata = prep_data(trainingdata)
     ret = np.log(trainingdata/trainingdata.shift(1)).iloc[1:].close
 
 
