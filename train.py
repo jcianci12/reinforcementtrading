@@ -109,10 +109,10 @@ def evaluate(X_test,y_test,model):
     for i in range(5, X_test.shape[0]):
         observation = np.append(X_test[i-5:i], [current_amount, current_asset_amount]).astype(np.float32)
         action, _ = model.predict(observation, deterministic=True)
-        print(f"choosing:{action}")
+        print(f"choosing:{action} with data{observation[0]}")
         currenty_test = y_test[i]
 
-        amount = action[0]  # Extract the amount from the action
+        amount = action[0]*1000  # Extract the amount from the action
 
         if amount > 0:  # Buying
             if amount * (1 + trading_cost) > current_amount:
@@ -121,7 +121,7 @@ def evaluate(X_test,y_test,model):
                 change = (1 + currenty_test - trading_cost)
                 current_amount -= amount * change
                 current_asset_amount += amount
-                reward = np.log1p(change)
+                reward =+ change
         elif amount < 0:  # Selling
             if abs(amount) > current_asset_amount:
                 reward = -1  # Punishment
@@ -129,10 +129,10 @@ def evaluate(X_test,y_test,model):
                 change = (1 + -1 * currenty_test - trading_cost)
                 current_amount -= amount * change  # Subtract because amount is negative
                 current_asset_amount += amount  # Add because amount is negative
-                reward = np.log1p(change)
+                reward =+ change
         elif amount == 0:  # Holding
             change = 1
-            reward = np.log1p(change)
+            reward =+ change
         else:
             raise ValueError("Received invalid action={} which is not part of the action space".format(action))
 
@@ -158,10 +158,10 @@ def main():
     ret = np.log(trainingdata/trainingdata.shift(1)).iloc[1:].close
 
 
-    X_train = trainingdata.iloc[:-50].values
-    X_test = trainingdata.iloc[-50:].values
-    y_train = ret.iloc[:-50].values
-    y_test = ret.iloc[-50:].values
+    X_train = trainingdata.iloc[:-500].values
+    X_test = trainingdata.iloc[-500:].values
+    y_train = ret.iloc[:-500].values
+    y_test = ret.iloc[-500:].values
 
 
     env = get_env(X_train,y_train)
@@ -177,9 +177,10 @@ def main():
 
     # explore(env)
     model = load_model_or_create_if_not_exist("model",env)
-    # model = trainmodel(model)
+    model = trainmodel(model)
 
     evaluate(X_test,y_test,model)
+    main()
 
 main()
 # on candle

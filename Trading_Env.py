@@ -23,7 +23,7 @@ class TradingEnv(gym.Env):
         self.last_action = 0  # Now a scalar value representing the last amount bought/sold
 
         # Define action space as Box with shape (1,), representing the amount to buy (positive) or sell (negative)
-        self.action_space = gym.spaces.Box(low=-1000, high=1000, shape=(1,), dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
 
         dfwidth = ohlcv.shape[1]
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(5 * ohlcv.shape[1] + 2,), dtype=np.float64)
@@ -50,30 +50,33 @@ class TradingEnv(gym.Env):
     
 
     def step(self, action):
-        amount = action[0]
+        amount = action[0]*1000#multiply out from the normalised action space to get to our max spend amount.
 
         if amount > 0:  # Buying
             if amount * (1 + self.trading_cost) > self.current_amount:
-                self.reward = -1  # Punishment
+                self.reward = -0.01 # Punishment
             else:
                 change = (1 + self.ret[self.current_step] - self.trading_cost)
                 self.current_amount -= amount * change
                 self.current_asset_amount += amount
+                # self.reward =+ np.log1p(change)
                 self.reward = np.log1p(change)
         elif amount < 0:  # Selling
             if abs(amount) > self.current_asset_amount:
-                self.reward = -1  # Punishment
+                self.reward = -0.01  # Punishment
             else:
                 change = (1 + -1 * self.ret[self.current_step] - self.trading_cost)
                 self.current_amount -= amount * change  # Subtract because amount is negative
                 self.current_asset_amount += amount  # Add because amount is negative
+                # self.reward =+ np.log1p(change)
                 self.reward = np.log1p(change)
         elif amount ==0:  # Holding
             change = 1
+            # self.reward =+ np.log1p(change)
             self.reward = np.log1p(change)
         else:
             raise ValueError("Received invalid action={} which is not part of the action space".format(action))
-        
+        # self.reward = self.reward*10
         self.last_action = action
         self.current_step += 1
 

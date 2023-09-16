@@ -6,9 +6,9 @@ import os
 
 
 def load_model_or_create_if_not_exist(filename: str, env: Union[gymnasium.Env, DummyVecEnv]) -> PPO:
-    if False:
+    # if False:
 
-    # if os.path.exists(filename):
+    if os.path.exists(filename):
         return PPO.load(filename)
     else:
         env_maker = lambda: env
