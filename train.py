@@ -177,7 +177,7 @@ def main():
 
     # explore(env)
     model = load_model_or_create_if_not_exist("model",env)
-    model = trainmodel(model)
+    # model = trainmodel(model)
 
     evaluate(X_test,y_test,model)
     main()

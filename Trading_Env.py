@@ -1,6 +1,6 @@
 import gymnasium as gym
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class TradingEnv(gym.Env):
     metadata = {'render.modes': ['console']}
@@ -33,7 +33,8 @@ class TradingEnv(gym.Env):
 
         self.current_amount = self.basePairAmount  # Initialize current amount here
         self.current_asset_amount = self.AssetAmount  # Initialize current amount here
-
+        # Reset the history at the start of each episode
+        self.price_action_history = []
 
     def reset(self ,seed=None):
         self.current_amount = self.basePairAmount  # Reset current amount at the start of each episode
@@ -51,7 +52,8 @@ class TradingEnv(gym.Env):
 
     def step(self, action):
         amount = action[0]*1000#multiply out from the normalised action space to get to our max spend amount.
-
+        # Append the current price and action to the history
+        self.price_action_history.append((self.ret[self.current_step], action[0]))
         if amount > 0:  # Buying
             if amount * (1 + self.trading_cost) > self.current_amount:
                 self.reward = -0.01 # Punishment
@@ -87,9 +89,28 @@ class TradingEnv(gym.Env):
         observation = np.append(self.ohlcv[self.current_step-5:self.current_step], [self.current_amount, self.current_asset_amount]).astype(np.float32)        
         truncated = False  # You'll need to define this based on your environment's logic
         info = {}  # Empty info dictionary
+        self.price_action_history.append((self.ret[self.current_step], action[0]))
         if(done):
             print(f"Step: {self.current_step}, Action: {action}, Reward: {self.reward}, Cash: {self.current_amount}, Asset: {self.current_asset_amount}, Total: {self.current_amount+self.current_asset_amount} ")
+                        # Plot the price and action over time at the end of each episode
+            n=50
+            prices, actions = zip(*self.price_action_history[-n:])
+            fig, ax1 = plt.subplots()
 
+            color = 'tab:red'
+            ax1.set_xlabel('time (s)')
+            ax1.set_ylabel('price', color=color)
+            ax1.plot(prices, color=color)
+            ax1.tick_params(axis='y', labelcolor=color)
+
+            ax2 = ax1.twinx()  
+            color = 'tab:blue'
+            ax2.set_ylabel('action', color=color)  
+            ax2.plot(actions, color=color)
+            ax2.tick_params(axis='y', labelcolor=color)
+
+            fig.tight_layout()  
+            plt.savefig('plot.png')
         return observation, self.reward, done, truncated, info
 
 
