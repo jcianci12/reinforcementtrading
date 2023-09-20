@@ -31,13 +31,15 @@ class TradingEnv(gym.Env):
         self.basePairAmount = 1000  # Initialize starting amount here
         self.AssetAmount = 0  # Initialize starting amount here
 
-        self.current_amount = self.basePairAmount  # Initialize current amount here
+        self.cash = self.basePairAmount  # Initialize current amount here
         self.current_asset_amount = self.AssetAmount  # Initialize current amount here
         # Reset the history at the start of each episode
         self.price_action_history = []
+        self.price_action_history.append((self.basePairAmount,self.AssetAmount,self.ret[self.current_step], 0))
+
 
     def reset(self ,seed=None):
-        self.current_amount = self.basePairAmount  # Reset current amount at the start of each episode
+        self.cash = self.basePairAmount  # Reset current amount at the start of each episode
         self.current_asset_amount = self.AssetAmount  # Initialize starting amount here
         # Reset the number of step the training has taken
         self.current_step = 5
@@ -45,7 +47,7 @@ class TradingEnv(gym.Env):
         # Reset the last action
         self.last_action = 0  # Now a scalar value representing the last amount bought/sold
         # must return np.array type
-        obs = np.append(self.ohlcv[self.current_step-5:self.current_step], [self.current_amount, self.current_asset_amount]).astype(np.float32)        
+        obs = np.append(self.ohlcv[self.current_step-5:self.current_step], [self.cash, self.current_asset_amount]).astype(np.float32)        
         info = {}  # Empty info dictionary
         return obs, info
     
@@ -53,48 +55,54 @@ class TradingEnv(gym.Env):
     def step(self, action):
         amount = action[0]*1000#multiply out from the normalised action space to get to our max spend amount.
         # Append the current price and action to the history
-        self.price_action_history.append((self.ret[self.current_step], action[0]))
+        last_price_history = self.price_action_history[self.current_step-self.current_step-1]
+        last_cash_value= last_price_history[0]
+        last_asset_value= last_price_history[1]
+        last_portfolio_value = last_cash_value+last_asset_value
+        
+        current_price = self.ret[self.current_step]
+        last_price = self.ret[self.current_step-1] if self.ret[self.current_step-1] else current_price
+        change = current_price-last_price
         if amount > 0:  # Buying
-            if amount * (1 + self.trading_cost) > self.current_amount:
-                self.reward = -0.01 # Punishment
+            if amount * (1 + self.trading_cost) > self.cash:
+                self.reward =-0.01 # Punishment
             else:
-                change = (1 + self.ret[self.current_step] - self.trading_cost)
-                self.current_amount -= amount * change
-                self.current_asset_amount += amount
-                # self.reward =+ np.log1p(change)
-                self.reward = np.log1p(change)
+                self.cash -= amount
+                self.current_asset_amount += amount/current_price                  
         elif amount < 0:  # Selling
             if abs(amount) > self.current_asset_amount:
-                self.reward = -0.01  # Punishment
+                self.reward =-0.01  # Punishment
             else:
-                change = (1 + -1 * self.ret[self.current_step] - self.trading_cost)
-                self.current_amount -= amount * change  # Subtract because amount is negative
-                self.current_asset_amount += amount  # Add because amount is negative
-                # self.reward =+ np.log1p(change)
-                self.reward = np.log1p(change)
+                #becauase we are dealing with negatives. We need to reverse
+                self.cash -= amount   
+                self.current_asset_amount += amount /current_price 
         elif amount ==0:  # Holding
-            change = 1
             # self.reward =+ np.log1p(change)
-            self.reward = np.log1p(change)
+            self.reward = change
         else:
             raise ValueError("Received invalid action={} which is not part of the action space".format(action))
+        current_portfolio_value = self.cash+(self.current_asset_amount*current_price)
+        change =  last_portfolio_value - current_portfolio_value
+        self.reward += change
         # self.reward = self.reward*10
         self.last_action = action
         self.current_step += 1
+        self.price_action_history.append((self.cash,self.current_asset_amount,self.ret[self.current_step], action[0]))
 
         # Have we iterate all data points?
         done = (self.current_step == self.ret.shape[0]-1)
-        
+        # print(f"Step: {self.current_step}, Action: {amount}, Reward: {self.reward}, Cash: {self.cash}, Asset: {self.current_asset_amount}, Total: {current_portfolio_value} ")
+
         # Return observation, reward, terminated, truncated, and info dictionary
-        observation = np.append(self.ohlcv[self.current_step-5:self.current_step], [self.current_amount, self.current_asset_amount]).astype(np.float32)        
+        observation = np.append(self.ohlcv[self.current_step-5:self.current_step], [self.cash, self.current_asset_amount]).astype(np.float32)        
         truncated = False  # You'll need to define this based on your environment's logic
         info = {}  # Empty info dictionary
-        self.price_action_history.append((self.ret[self.current_step], action[0]))
+        self.price_action_history.append((self.basePairAmount,self.AssetAmount,self.ret[self.current_step], 0))
         if(done):
-            print(f"Step: {self.current_step}, Action: {action}, Reward: {self.reward}, Cash: {self.current_amount}, Asset: {self.current_asset_amount}, Total: {self.current_amount+self.current_asset_amount} ")
+            print(f"Step: {self.current_step}, Action: {action}, Reward: {self.reward}, Cash: {self.cash}, Asset: {self.current_asset_amount}, Total: {self.cash+self.current_asset_amount} ")
                         # Plot the price and action over time at the end of each episode
             n=50
-            prices, actions = zip(*self.price_action_history[-n:])
+            cash,asset_amount,prices, actions = zip(*self.price_action_history[-n:])
             fig, ax1 = plt.subplots()
 
             color = 'tab:red'
