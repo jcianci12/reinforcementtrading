@@ -70,20 +70,7 @@ def get_training_data():
 def get_env(X_train,y_train):
     env = TradingEnv(X_train,y_train)
     
-    state = env.reset()
-    while True: 
-        action = env.action_space.sample()
-        #how can I use this info returned from the step function?
-        #self.ohlcv[self.current_step-5:self.current_step].astype(np.float32), self.reward, done, {}
-        observation, reward, terminated, truncated, info = env.step(action)
-        done = terminated
-        if done:
-            print("Info",info) 
-            break           
-    plt.figure(figsize=(15,6))
-    plt.cla()
-    plt.savefig("env.png")
-    plt.close()
+    # 
     # Assuming `CustomEnv` is your custom environment class
     check_env(env)
     return env
@@ -106,11 +93,11 @@ def main():
     trainingdata = prep_data(trainingdata)
     # ret = np.log(trainingdata/trainingdata.shift(1)).iloc[1:].close
     ret = trainingdata.shift(1).close
-
-    X_train = trainingdata.iloc[:-500].values
-    X_test = trainingdata.iloc[-500:].values
-    y_train = ret.iloc[:-500].values
-    y_test = ret.iloc[-500:].values
+    n = 100
+    X_train = trainingdata.iloc[:n].values
+    X_test = trainingdata.iloc[-n:].values
+    y_train = ret.iloc[:n].values
+    y_test = ret.iloc[-n:].values
 
 
     env = get_env(X_train,y_train)
