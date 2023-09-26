@@ -2,9 +2,10 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
+s,e = 1,41
 # Your time series data
-time = np.array(range(1, 21))
-values = np.array([i*2 for i in range(1, 21)])
+time = np.array(range(s, e))
+values = np.array([i*2 for i in range(s, e)])
 
 # Preprocess the data
 x_train = time[:-1]
@@ -25,12 +26,15 @@ model.compile(optimizer='sgd', loss='mean_squared_error')
 # Train the model
 model.fit(x_train_norm, y_train_norm, epochs=500)
 
+#index
+i = 30
+
 # Predict the next value
-x_predict = np.array([20])
+x_predict = np.array([i])
 x_predict_norm = (x_predict - np.mean(x_train)) / np.std(x_train)
 y_predict_norm = model.predict(x_predict_norm)
 
 # De-normalize the predicted value
 y_predict = y_predict_norm * np.std(y_train) + np.mean(y_train)
-
-print(f"The predicted value for day 20 is: {y_predict} | Actual:{values[:1]}")
+print(values)
+print(f"The predicted value for day 21 is: {y_predict} | Actual:{values[i:i+1]}")
