@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+
 class TradingEnv(gym.Env):
     metadata = {'render.modes': ['console']}
     
@@ -28,7 +29,6 @@ class TradingEnv(gym.Env):
         self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
 
         dfwidth = ohlcv.shape[1]
-        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(5 * ohlcv.shape[1] + 2,), dtype=np.float64)
         
         self.initialCash = 1000  # Initialize starting amount here
         self.AssetAmount = 0  # Initialize starting amount here

@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import webbrowser
+import gymnasium
 
 # Stable baselines - RL stuff
 from stable_baselines3 import A2C, PPO
@@ -16,11 +17,11 @@ from Trading_Env import TradingEnv
 
 from api import fetch_ohlcv_range,get_dates_and_data_from_latest_file
 from evaluate import evaluate
-from load_model_or_create_if_not_exist import load_model_or_create_if_not_exist
+from load_model_or_create_if_not_exist import build_agent, build_model, load_model_or_create_if_not_exist
 from prep_data import prep_data
 from save_model import save_model
 import signal
-from stable_baselines3.common.env_checker import check_env
+from tensorflow.keras.optimizers import Adam
 
 
 #get the range
@@ -72,7 +73,6 @@ def get_env(X_train,y_train):
     
     # 
     # Assuming `CustomEnv` is your custom environment class
-    check_env(env)
     return env
 
     #train the model
@@ -95,28 +95,36 @@ def main():
     ret = trainingdata.shift(1).close
     n = 100
     X_train = trainingdata.iloc[:n].values
-    X_test = trainingdata.iloc[-n:].values
-    y_train = ret.iloc[:n].values
-    y_test = ret.iloc[-n:].values
-
-
+    # X_test = trainingdata.iloc[-n:].values
+    y_train = ret.iloc[:5].values
+    # y_test = ret.iloc[-n:].values
     env = get_env(X_train,y_train)
+
+    observation_space = gymnasium.spaces.Box(low=-np.inf, high=np.inf, shape=(5 * trainingdata.shape[1] + 2,), dtype=np.float64)
+    actions = gymnasium.spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
+    model = build_model(observation_space,actions)
+    print(model.summary())
+
+
+    dqn = build_agent(model, actions)
+    dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+    dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)
     
-        # sample action:
-    print("sample action:", env.action_space.sample())
+    #     # sample action:
+    # print("sample action:", env.action_space.sample())
 
-    # observation space shape:
-    print("observation space shape:", env.observation_space.shape)
+    # # observation space shape:
+    # print("observation space shape:", env.observation_space.shape)
 
-    # sample observation:
-    print("sample observation:", env.observation_space.sample())
+    # # sample observation:
+    # print("sample observation:", env.observation_space.sample())
 
-    # explore(env)
-    model = load_model_or_create_if_not_exist("model",env)
-    model = trainmodel(model)
+    # # explore(env)
+    # model = load_model_or_create_if_not_exist("model",env)
+    # model = trainmodel(model)
 
     # evaluate(X_test,y_test,model,env)
-    main()
+    # main()
 
 main()
 # on candle
