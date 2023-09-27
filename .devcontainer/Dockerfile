@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/python
+FROM mcr.microsoft.com/devcontainers/python:3.11
 
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
