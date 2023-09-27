@@ -10,7 +10,7 @@ s,e,data = get_dates_and_data_from_latest_file()
 #get the range
 def fetch_range():
     end = datetime.datetime.now()    
-    start = end - datetime.timedelta(0,300*1000)
+    start = end - datetime.timedelta(0,300*10)
     return start,end
 
 df_new = fetch_ohlcv_range(
