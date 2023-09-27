@@ -1,12 +1,27 @@
+import datetime
 from matplotlib import pyplot as plt
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
+from api import fetch_ohlcv_range, get_dates_and_data_from_latest_file
+s,e,data = get_dates_and_data_from_latest_file()
+
+#get the range
+def fetch_range():
+    end = datetime.datetime.now()    
+    start = end - datetime.timedelta(0,300*1000)
+    return start,end
+
+df_new = fetch_ohlcv_range(
+        s, e, "BTCUSDT", "5m", "spot")
+
 s,e = 0,41
+# Assuming df_new is your new OHLCV data and 'Close' is the column with closing prices
+values = df_new['close'].values
+
 # Your time series data
-time = np.array(range(s, e))
-values = np.array([i*2 for i in range(s, e)])
+time = np.array(range(len(values)))
 
 # Preprocess the data
 x_train = time
