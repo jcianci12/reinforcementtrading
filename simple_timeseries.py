@@ -5,8 +5,11 @@ import tensorflow as tf
 from tensorflow import keras
 
 from api import fetch_ohlcv_range, get_dates_and_data_from_latest_file
+from prep_data import prep_data
 from save_model import save_model
-# s,e,data = get_dates_and_data_from_latest_file()
+# s,e,data = get_dates_and_data_from_latest_file(
+from  config import *
+from show_heatmap import show_heatmap
 
 #get the range
 def fetch_range():
@@ -16,6 +19,11 @@ def fetch_range():
 s,e =fetch_range()
 df_new = fetch_ohlcv_range(
         s, e, "BTCUSDT", "5m", "spot")
+df_new = prep_data(df_new)
+
+
+show_heatmap(df_new)
+
 
 # Exclude 'time' column
 features = [col for col in df_new.columns if col != 'date']
@@ -32,19 +40,25 @@ y_train = values
 x_train_norm = (x_train - np.mean(x_train)) / np.std(x_train)
 y_train_norm = (y_train - np.mean(y_train)) / np.std(y_train)
 
-# Define the model
-model = keras.Sequential([
-    keras.layers.Dense(units=len(features), input_shape=[1])
-])
 
-# Compile the model
-model.compile(optimizer='sgd', loss='mean_squared_error')
-
-
-model = keras.models.load_model('Model.h5')
 # Train the model
-# m = model.fit(x_train_norm, y_train_norm, epochs=500)
-save_model(model,"Model") 
+if(TRAIN):
+    # Define the model
+    model = keras.Sequential([
+        keras.layers.Dense(64, input_shape=[1]),
+        keras.layers.LeakyReLU(),
+        keras.layers.Dense(64),
+        keras.layers.LeakyReLU(),
+        keras.layers.Dense(units=len(features))
+    ])
+
+    # Compile the model
+    model.compile(optimizer='sgd', loss='mean_squared_error')
+    m = model.fit(x_train_norm, y_train_norm, epochs=1000)
+    save_model(model,"Model") 
+else:
+    model = keras.models.load_model('Model.h5')
+
 
 def predict_value(i):
     # Predict the next value
@@ -66,9 +80,12 @@ for i in predicted_times:
     predicted_values.append(predicted_value[0][0])  # Flatten the predicted values
     print(f"The predicted value for day {i} is: {predicted_value}")
 
+
+
 # Plot real and predicted values
 plt.plot(time, np.array( real_values)[:,0], color='blue', label='Real Values')
 plt.plot(predicted_times, predicted_values, color='green', label='Predicted Values')
 plt.legend()
 plt.savefig("plot.png")
 plt.close()
+
