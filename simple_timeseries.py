@@ -1,4 +1,5 @@
 import datetime
+from matplotlib import pyplot as plt
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -10,7 +11,7 @@ from save_model import save_model
 # s,e,data = get_dates_and_data_from_latest_file(
 from  config import *
 from show_heatmap import show_heatmap
-
+import seaborn as sns
 
 #get the range
 def fetch_range():
@@ -40,30 +41,13 @@ def prep_training_data(data):
     # Normalize the data
     x_train_norm = (x_train - np.mean(x_train)) / np.std(x_train)
     y_train_norm = (y_train - np.mean(y_train)) / np.std(y_train)
+    # Normalize the data using z-score normalization
+    # x_train_norm = (x_train - np.mean(x_train)) / np.std(x_train)
+    # y_train_norm = (y_train - np.mean(y_train, axis=0)) / np.std(y_train, axis=0)
 
     return features,values,time,x_train,y_train,x_train_norm,y_train_norm
 
-def get_model(features,x_train_norm,y_train_norm):
-    model = keras.Sequential([
-    keras.layers.Dense(64, input_shape=[1]),
-    keras.layers.LeakyReLU(),
-    keras.layers.Dense(64),
-    keras.layers.LeakyReLU(),
-    keras.layers.Dense(units=len(features))
-    
-])
-        # Compile the model
-    model.compile(optimizer='sgd', loss='mean_squared_error')
-    #     inputs = keras.layers.Input(shape=(inputs.shape[1], inputs.shape[2]))
-    #     lstm_out = keras.layers.LSTM(32)(inputs)
-    #     outputs = keras.layers.Dense(1)(lstm_out)
 
-    #     model = keras.Model(inputs=inputs, outputs=outputs)
-    #     model.compile(optimizer=keras.optimizers.Adam(learning_rate=learning_rate), loss="mse")
-    # model.summary()
-
-    m = model.fit(x_train_norm, y_train_norm, epochs=1000)
-    save_model(model,"Model") 
 
 
 
@@ -94,21 +78,29 @@ def get_existing_model():
     model = keras.models.load_model('Model.h5')
     return model
 def init_model(features):
+    # model = keras.Sequential([
+    #         keras.layers.Dense(64, input_shape=[1]),
+    #         keras.layers.LeakyReLU(),
+    #         keras.layers.Dense(64),
+    #         keras.layers.LeakyReLU(),
+    #         keras.layers.Dense(units=len(features))
+    #     ])
     model = keras.Sequential([
-            keras.layers.Dense(64, input_shape=[1]),
-            keras.layers.LeakyReLU(),
-            keras.layers.Dense(64),
-            keras.layers.LeakyReLU(),
-            keras.layers.Dense(units=len(features))
-        ])
+        keras.layers.Dense(64, input_shape=[1]),
+        keras.layers.LeakyReLU(),
+        keras.layers.Dense(64),
+        keras.layers.LeakyReLU(),
+        keras.layers.Dense(units=len(features))
+    ])
 
         # Compile the model
     model.compile(optimizer='sgd', loss='mean_squared_error')
     return model
 def train_model(model,x_train_norm,y_train_norm):
-    m = model.fit(x_train_norm, y_train_norm, epochs=1000)
+    m = model.fit(x_train_norm, y_train_norm, epochs=2000)
     save_model(model,"Model") 
     return model
+
 
 def main():
     data = get_data()
@@ -125,6 +117,7 @@ def main():
         model = init_model(features)
         
     model = train_model(model,x_train_norm,y_train_norm)
+    save_model(model,"model")
     real_values,predicted_values,predicted_times=predict(values,model,x_train,y_train)
     plot_chart(real_values,predicted_values,predicted_times,time)
     main()
