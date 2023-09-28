@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 from api import fetch_ohlcv_range, get_dates_and_data_from_latest_file
+from init_model import init_model
 from plot_chart import plot_chart
 from prep_data import prep_data
 from save_model import save_model
@@ -37,6 +38,9 @@ def prep_training_data(data):
     # Preprocess the data
     x_train = time
     y_train = values
+
+
+
 
     # Normalize the data
     x_train_norm = (x_train - np.mean(x_train)) / np.std(x_train)
@@ -77,25 +81,6 @@ def predict(values,model,x_train,y_train):
 def get_existing_model():
     model = keras.models.load_model('Model.h5')
     return model
-def init_model(features):
-    # model = keras.Sequential([
-    #         keras.layers.Dense(64, input_shape=[1]),
-    #         keras.layers.LeakyReLU(),
-    #         keras.layers.Dense(64),
-    #         keras.layers.LeakyReLU(),
-    #         keras.layers.Dense(units=len(features))
-    #     ])
-    model = keras.Sequential([
-        keras.layers.Dense(64, input_shape=[1]),
-        keras.layers.LeakyReLU(),
-        keras.layers.Dense(64),
-        keras.layers.LeakyReLU(),
-        keras.layers.Dense(units=len(features))
-    ])
-
-        # Compile the model
-    model.compile(optimizer='sgd', loss='mean_squared_error')
-    return model
 def train_model(model,x_train_norm,y_train_norm):
     m = model.fit(x_train_norm, y_train_norm, epochs=2000)
     save_model(model,"Model") 
@@ -114,7 +99,7 @@ def main():
         model = get_existing_model()
     except:
         # If the model does not exist, initialize a new one
-        model = init_model(features)
+        model = init_model(x_train,y_train)
         
     model = train_model(model,x_train_norm,y_train_norm)
     save_model(model,"model")
