@@ -16,7 +16,6 @@ from show_heatmap import show_heatmap
 import seaborn as sns
 
 
-scaler = StandardScaler()
 
 #get the range
 def fetch_range():
@@ -30,7 +29,7 @@ def get_data():
     df_new = prep_data(df_new)
     return df_new
 
-def prep_training_data(df):
+def prep_training_data(scaler,df):
        
     #Separate dates for future plotting
     train_dates = pd.to_datetime(df['date'])
@@ -49,7 +48,7 @@ def prep_training_data(df):
 
     #LSTM uses sigmoid and tanh that are sensitive to magnitude so values need to be normalized
     # normalize the dataset
-    scaler = StandardScaler()
+
     scaler = scaler.fit(df_for_training)
     df_for_training_scaled = scaler.transform(df_for_training)
 
@@ -95,7 +94,7 @@ def predict_value(i,model,x_train,y_train):
     return y_predict
 
 
-def predict(model,trainX,trainY):
+def predict(scaler,model,trainX,trainY):
     # Call the function for 10 moments beyond the training data and plot the results
     history = model.fit(trainX, trainY, epochs=5, batch_size=16, validation_split=0.1, verbose=1)
     plt.plot(history.history['loss'], label='Training loss')
@@ -124,8 +123,8 @@ def predict(model,trainX,trainY):
     #Perform inverse transformation to rescale back to original range
     #Since we used 5 variables for transform, the inverse expects same dimensions
     #Therefore, let us copy our values 5 times and discard them after inverse transform
-    prediction_copies = np.repeat(prediction, trainY.shape[1], axis=-1)
-    y_pred_future = scaler.inverse_transform(prediction_copies)[:,0]
+    # prediction_copies = np.repeat(prediction, trainX.shape[1], axis=-1)
+    # y_pred_future = scaler.inverse_transform(prediction_copies)[:,0]
         
     df_forecast = pd.DataFrame({'Date':np.array(trainX), 'Open':y_pred_future})
     df_forecast['Date']=pd.to_datetime(df_forecast['Date'])
@@ -165,11 +164,14 @@ def train_model(model,trainX,trainY):
 
 
 def main():
+    scaler = StandardScaler()
+
+
     data = get_data()
     data = prep_data(data)
     show_heatmap(data)
 
-    trainX,trainY = prep_training_data(data)
+    trainX,trainY = prep_training_data(scaler,data)
 
     try:
         # Try to load the existing model
@@ -181,7 +183,7 @@ def main():
     model = train_model(model,trainX,trainY)
     save_model(model,"model")
 
-    model=predict(model,trainX,trainY)
+    model=predict(scaler,model,trainX,trainY)
 
     # plot_chart(real_values,predicted_values,predicted_times,time)
     # main()
